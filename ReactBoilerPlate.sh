@@ -41,14 +41,16 @@ cat >package.json <<EOL
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start":  "webpack-dev-server"
+    "start":  "webpack-dev-server",
+    "lint": "eslint src/** src/**/**; exit 0",
+    "lint-fix": "eslint src/** src/**/** --fix; exit 0"
   },
   "author": "",
   "license": "ISC"
 }
 
 EOL
-
+d
 echo Installing React and prop types...
 
 # install React, Prop types, and hot loader
@@ -103,6 +105,16 @@ module.exports = {
     rules: [
       {
         test: /\.jsx?$/,
+        enforce: "pre",
+        loader: "eslint-loader",
+        exclude: /node_modules/,
+        options: {
+          emitWarning: true,
+          configFile: "./.eslintrc.json"
+          }
+      },
+      {
+        test: /\.jsx?$/,
         loader: "babel-loader",
         exclude: /node_modules/,
         options: {
@@ -111,7 +123,8 @@ module.exports = {
             "react",
           ],
           plugins: [
-            "react-hot-loader/babel"
+            "react-hot-loader/babel",
+            "styled-jsx/babel"
           ]
         }
       },
@@ -151,9 +164,9 @@ EOL
 
 touch src/index.jsx
 cat >src/index.jsx <<EOL
-import React from "react";
-import ReactDOM from "react-dom";
-import App from "./components/App";
+import React from 'react';
+import ReactDOM from 'react-dom';
+import App from './components/App';
 import { AppContainer } from 'react-hot-loader';
 
 const render = (Component) => {
@@ -167,23 +180,28 @@ const render = (Component) => {
 
 render(App);
 
+/*eslint-disable */
 if (module.hot) {
   module.hot.accept('./components/App', () => {
     render(App)
   });
 }
+/*eslint-enable */
 EOL
 
 touch src/components/App.jsx
 cat >src/components/App.jsx <<EOL
-import React from "react";
-//import PropTypes from "prop-types";
+import React from 'react';
+//import PropTypes from 'prop-types';
 
 function App(){
   var styles = {
-  }
+  };
   return (
     <div style={styles}>
+      <style jsx>{\`
+        font-family: Helvetica;
+      \`}</style>
       ${projectName}
     </div>
   );
@@ -194,3 +212,71 @@ function App(){
 
 export default App;
 EOL
+
+# install eslint and its plugins
+echo Install eslint and its plugins and loaders...
+
+npm install eslint@4.13.1 -g
+npm install eslint@4.13.1 --save-dev
+
+npm install eslint-plugin-react -g
+npm install eslint-plugin-react --save-dev
+
+npm install eslint-loader --save-dev
+
+touch .eslintrc.json
+cat >.eslintrc.json <<EOL
+{
+  "env": {
+    "browser": true,
+    "es6": true
+  },
+  "extends": "eslint:recommended",
+  "parserOptions": {
+    "ecmaFeatures": {
+      "experimentalObjectRestSpread": true,
+      "jsx": true
+    },
+    "sourceType": "module"
+  },
+  "plugins": [
+    "react"
+  ],
+  "rules": {
+    "indent": [
+      "error",
+      2
+    ],
+    "linebreak-style": [
+      "error",
+      "unix"
+    ],
+    "quotes": [
+      "error",
+      "single"
+    ],
+    "semi": [
+      "error",
+      "always"
+    ],
+    "react/jsx-uses-vars": 2,
+    "react/jsx-uses-react": 2,
+    "react/jsx-no-duplicate-props": 2,
+    "react/jsx-no-undef": 2,
+    "react/no-multi-comp": 2,
+    "react/jsx-indent-props": [
+        "error",
+        2
+      ],
+    "react/jsx-pascal-case": 2,
+    "react/prop-types": 2,
+    "react/jsx-indent": [
+        "error",
+        2
+    ],
+    "react/jsx-key": 2
+  }
+}
+EOL
+
+npm install --save styled-jsx
